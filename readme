@@ -1,0 +1,40 @@
+ⓉⒺⓂⒶ ① ⓅⒸ - ⓇⓄⓊⓉⒺⓇ
+Carp Constantin 322CDb.
+
+
+- Pentru inceput am preluat din laborator structurile pentru tabela de rutare si tabela arp.
+    pentru ca mi s-au parut foarte convenabile. Am initializat ca variabile globale tabelele si dimensiunea lor.
+    De asemenea am preluat din laborator si functii precum ip_checksum,hexdump;
+    logica de la forward de asemenea am preluat-o din laboratorul 4.
+
+- Ulterior am implementat urmatoarele functii; Codul este bine comentat deci o sa explic functiile doar in
+    linii generale;
+
+1) int cmpFunc(const void *a, const void *b); functia comparator folosita pentru Qsort;
+2) struct arpEntry *get_arp_entry(__u32 ip); - cauta un entry in tabela arp si returneaza acel entry;
+3) void createRouteTable(); - realizeaza parsarea tabelei de rutare;
+4) struct route_table *binarySearchHelper(__u32 dest_ip , int index); cauta ruta cu cea mai mare masca
+5) struct route_table *binarySearch(int left, int right, __u32 dest_ip): functia de cautare , sortare binara
+complexitate O(logn) +- cautarea din BinarySearchHelper
+6) void sendRequest(__u32 dest_ip, int interface); - trimite un ArpRequest pe broadcast pentru a gasi adresa mac.
+7) void arpReply(packet *m); adauga in tabela Arp raspund unui ArpRequest trimis , adica ip si mac-ul interfetei.
+8) void icmpChecker(packet *m, uint8_t type); functia care se ocupa de toate tipurile de icmp , seteaza campurile
+necesare ex: "type", "protocol" din headerele ip,icmp si  trimite un packet icmp.
+9) while-ul din main unde are loc forwardarea in sine si trimiterea/primirea packetelor ARP;
+    Pentru inceput verific de ce tip este packetul, daca este ARP, verifica daca este un Reply Sau un Request
+        daca e un reply , verifica daca am ceva mesaje in coada care trebuie trimise , daca da atunci trimitele acum.
+        Daca e request trimite un raspuns la acel request.
+
+    Procesul de forwarding:
+        1) verifica la inceput checksum-ul; daca nu e bun da drop la packet.
+        2) verifica ttl , daca nu e bun  trimite un un packet icmp - time_exeeded si da drop la packetul vechi ;
+        3) cauta un best route in tabela de rutare , trimite un packet icmp "destination_unreachable"
+            daca nu avem da drop la packetul vechi;
+        4) cauta un entry in tabela, daca nu avem , cream o copie la packet, o punem in coada, si trimitem un arp
+            request pentru a gasi adresa mac dorita;
+        5) updatez ttl
+        6) recalculez checksum-ul
+        7) iau adresa mac din tabela ARP
+        8) setez campurile headerului ether de mac
+        9) trimit packetul;
+
